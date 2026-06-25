@@ -1,29 +1,29 @@
-# GNN para Predição de Atraso de Voos Brasileiros
+# GNN for Predicting Brazilian Flight Delays
 
-TCC do MBA em IA & Big Data (ICMC-USP). O projeto treina uma **Graph Neural Network heterogênea** para prever o atraso de chegada (em minutos) de voos comerciais brasileiros, modelando as relações entre voos, aeroportos, aeronaves e clima como um grafo no Neo4j.
-
----
-
-## Resultados Principais (Dataset Nacional: ~1.17M voos)
-
-Utilizando a arquitetura **Heterogeneous Graph Transformer (HGT)** com estratégia de *subgraph partitioning* para lidar com limitações de memória, o modelo alcançou um **Mean Absolute Error (MAE) de 6,7 minutos** para o conjunto de validação.
-
-Para validar a capacidade de generalização e evitar *overfitting*, uma validação *out-of-sample* (holdout) excluiu completamente 5 aeroportos (um de cada região) do conjunto de treinamento. Os resultados de MAE nestes aeroportos nunca vistos pelo modelo foram:
-
-- **GYN (Goiânia):** 5,9 minutos
-- **MAO (Manaus):** 6,5 minutos
-- **FOR (Fortaleza):** 6,8 minutos
-- **VCP (Campinas):** 6,8 minutos
-- **POA (Porto Alegre):** 7,6 minutos
-
-> O MAE agregado para os aeroportos vistos no treinamento foi muito semelhante (6,9 minutos), o que demonstra uma excelente generalização do modelo baseada na topologia da malha e atributos meteorológicos. Para referência, as arquiteturas GAT e TGN registraram MAEs de 24,76 e 70,02 minutos neste mesmo experimento validado, confirmando a superioridade do HGT.
+MBA in AI & Big Data (ICMC-USP) Final Project (TCC). This project trains a **Heterogeneous Graph Neural Network** to predict arrival delays (in minutes) of Brazilian commercial flights, modeling the relationships between flights, airports, aircraft, and weather as a graph in Neo4j.
 
 ---
 
-## Fluxo de Dados
+## Main Results (National Dataset: ~1.17M flights)
+
+Using the **Heterogeneous Graph Transformer (HGT)** architecture with a *subgraph partitioning* strategy to handle memory limitations, the model achieved a **Mean Absolute Error (MAE) of 6.7 minutes** on the validation set.
+
+To validate generalization capability and avoid *overfitting*, an *out-of-sample* (holdout) validation completely excluded 5 airports (one from each region) from the training set. The MAE results for these airports, never seen by the model during training, were:
+
+- **GYN (Goiânia):** 5.9 minutes
+- **MAO (Manaus):** 6.5 minutes
+- **FOR (Fortaleza):** 6.8 minutes
+- **VCP (Campinas):** 6.8 minutes
+- **POA (Porto Alegre):** 7.6 minutes
+
+> The aggregate MAE for airports explicitly seen during training was very similar (6.9 minutes), demonstrating an excellent generalization capability of the model based on network topology and meteorological attributes. For reference, the GAT and TGN architectures achieved MAEs of 24.76 and 70.02 minutes in this same validated experiment, confirming the superiority of HGT.
+
+---
+
+## Data Flow
 
 ```
-APIs Externas          Neo4j (grafo)          PyTorch Geometric           Saída
+External APIs          Neo4j (graph)          PyTorch Geometric           Output
 ──────────────         ─────────────          ─────────────────────────   ──────
 VRA/ANAC     ──┐       ┌─ Flight              ┌─ data/graph.pt (HeteroData)
 OpenSky      ──┼──▶    ├─ Airport     ──▶     │                             ──▶  models/model.pt
@@ -31,56 +31,56 @@ Open-Meteo   ──┘       ├─ Aircraft            └─ train.py / train_
                        └─ Clima                    minibatch.py
 ```
 
-**Fases do pipeline:**
-1. **Ingestão** → `load_data.py` popula o Neo4j com voos, aeroportos e clima
-2. **Enriquecimento** → `enrich_aircraft_age.py` + `create_next_rotation.py` adicionam features e arestas
-3. **Build** → `build_graph.py` extrai o Neo4j e gera `graph.pt` (HeteroData do PyG)
-4. **Treino** → `train.py` ou `train_minibatch.py` treinam a GNN e salvam `model.pt`
-5. **Inferência** → `predict.py` prevê atraso para voos conhecidos ou futuros
+**Pipeline phases:**
+1. **Ingestion** → `load_data.py` populates Neo4j with flights, airports, and weather.
+2. **Enrichment** → `enrich_aircraft_age.py` + `create_next_rotation.py` add features and edges.
+3. **Build** → `build_graph.py` extracts from Neo4j and generates `graph.pt` (PyG HeteroData).
+4. **Train** → `train.py` or `train_minibatch.py` train the GNN and save `model.pt`.
+5. **Inference** → `predict.py` predicts delays for known or future flights.
 
 ---
 
 ## Quick Start
 
 ```bash
-# 1. Construir grafo de teste (PoC — ~2.360 voos, rápido)
+# 1. Build test graph (PoC — ~2,360 flights, fast)
 python build_graph.py --sample 2000 --output data/graph_poc.pt --stats
 
-# 2. Treinar o modelo GAT
+# 2. Train the GAT model
 python train.py --model gat --graph data/graph_poc.pt --output models/model_gat.pt --epochs 80
 
-# 3. Ver previsões para todos os voos do grafo
+# 3. Predict for all flights in the graph
 python predict.py --graph data/graph_poc.pt --model models/model_gat.pt --model-type gat
 
-# 4. Dataset completo (demora mais, usa mais RAM)
+# 4. Full dataset (takes longer, uses more RAM)
 python build_graph.py --filter-airports --output data/graph_major.pt --stats
 python train.py --model gat --graph data/graph_major.pt --output models/model_major.pt --epochs 80
 ```
 
 ---
 
-## Requisitos
+## Requirements
 
 ```
 Python 3.11 (Anaconda)
 torch
 torch-geometric
-neo4j (driver Python)
+neo4j (Python driver)
 pandas
 numpy
 scikit-learn
 requests
 ```
 
-Neo4j rodando localmente em `bolt://192.168.15.118:7687` (usuário `neo4j`, senha `tcc12345`).
-Credenciais OpenSky em `credentials.json` (não commitar).
+Neo4j running locally at `bolt://192.168.15.118:7687` (user `neo4j`, password `tcc12345`).
+OpenSky credentials in `credentials.json` (do not commit).
 
 ---
 
-## Documentação Detalhada
+## Detailed Documentation
 
-| Documento | O que cobre |
+| Document | What it covers |
 |-----------|-------------|
-| **[PIPELINE.md](PIPELINE.md)** | Guia completo de execução — cada fase, cada comando, cada parâmetro |
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Schema do grafo, feature engineering, arquitetura dos modelos, decisões de design |
-| **[EXPERIMENTO_GNN.md](EXPERIMENTO_GNN.md)** | Log do experimento comparativo GAT × HGT × TGN com resultados detalhados |
+| **[PIPELINE.md](PIPELINE.md)** | Complete execution guide — every phase, command, and parameter |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Graph schema, feature engineering, model architecture, and design decisions |
+| **[EXPERIMENTO_GNN.md](EXPERIMENTO_GNN.md)** | Comparative experiment log (GAT × HGT × TGN) with detailed results |

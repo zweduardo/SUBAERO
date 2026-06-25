@@ -77,7 +77,8 @@ def get_siros_temp(temporada):
 
 
 # ── Clima (OpenWeatherMap) ──────────────────────────────────────────────────
-API_KEY_CLIMA = "5e2b5e6950dc4c4d1e0262d2b8d35af0"
+import os
+API_KEY_CLIMA = os.getenv("API_KEY_CLIMA", "your_openweathermap_api_key_here")
 
 def get_clima(lat, lon):
     """Retorna clima atual para uma coordenada."""

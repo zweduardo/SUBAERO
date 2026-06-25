@@ -30,7 +30,7 @@ from api_calls import (
 #  Classe Neo4j — encapsula toda interação com o banco
 # ═══════════════════════════════════════════════════════════════════════════
 class Neo4jDB:
-    def __init__(self, uri="bolt://192.168.15.118:7687",
+    def __init__(self, uri=os.getenv("NEO4J_URI", "bolt://localhost:7687"),
                  user="neo4j", password="tcc12345"):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
 

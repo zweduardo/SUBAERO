@@ -1,4 +1,4 @@
-# GNN for Predicting Brazilian Flight Delays
+# SUBAERO — Predicting Flight Delay Propagation with Heterogeneous GNNs
 
 MBA in AI & Big Data (ICMC-USP) Final Project (TCC). This project trains a **Heterogeneous Graph Neural Network** to predict arrival delays (in minutes) of Brazilian commercial flights, modeling the relationships between flights, airports, aircraft, and weather as a graph in Neo4j.
 
@@ -72,8 +72,8 @@ scikit-learn
 requests
 ```
 
-Neo4j running locally at `bolt://192.168.15.118:7687` (user `neo4j`, password `tcc12345`).
-OpenSky credentials in `credentials.json` (do not commit).
+Neo4j running locally at `bolt://localhost:7687` (default user `neo4j`). Configure your credentials via environment variables.
+OpenSky and OpenWeatherMap credentials should be configured via environment variables.
 
 ---
 
@@ -81,6 +81,6 @@ OpenSky credentials in `credentials.json` (do not commit).
 
 | Document | What it covers |
 |-----------|-------------|
-| **[PIPELINE.md](PIPELINE.md)** | Complete execution guide — every phase, command, and parameter |
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Graph schema, feature engineering, model architecture, and design decisions |
-| **[EXPERIMENTO_GNN.md](EXPERIMENTO_GNN.md)** | Comparative experiment log (GAT × HGT × TGN) with detailed results |
+| **[PIPELINE.md](docs/PIPELINE.md)** | Complete execution guide — every phase, command, and parameter |
+| **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** | Graph schema, feature engineering, model architecture, and design decisions |
+| **[EXPERIMENTO_GNN.md](docs/EXPERIMENTO_GNN.md)** | Comparative experiment log (GAT × HGT × TGN) with detailed results |

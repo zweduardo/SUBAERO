@@ -1,0 +1,411 @@
+=== PAGE 1 ===
+Predicting flight delay propagation in the Brazilian aviation
+network with Heterogeneous Graph Neural Networks
+EduardoZantutWittmann1,MirelaTeixeiraCazzolato1
+1InstituteofMathematicsandComputerScience–UniversityofSa˜oPaulo(ICMC/USP)
+AvenidaTrabalhadorSa˜o-carlense,400-CentroCEP:13566-590-Sa˜oCarlos-SP-Brazil
+eduardozw@usp.br, mirela@icmc.usp.br
+Abstract. ThisworktakesadvantageofaGraphNeuralNetwork(GNN)model
+to predict flight delay propagation within the Brazilian aviation network. We
+propose SUBAERO, a method with an architecture that comprises a diverse
+data ingestion pipeline, integrating weather, airport, flight, and aircraft data
+via APIs. These datasets are structured in a graph-oriented database (Neo4j)
+to map complex spatial-temporal dependencies. A Heterogeneous Graph Neu-
+ral Network (HGT) approach was employed, achieving a Mean Absolute Error
+(MAE) of 6.7 minutes in delay predictions. This study applies advanced Data
+Science techniques to optimize urban and regional mobility, providing a timely
+decision-supporttooltomitigateoperationalbottlenecksandenhancetransport
+infrastructureforsocialgood.
+1. Introduction
+ThescaleoftheCommercialAviationisglobal,transportingpeopleandcargoworldwide
+by a huge network of Air Routes and Connection Hubs. According to recent data from
+the International Air Transport Association (IATA) and the International Civil Aviation
+Organization (ICAO) [IATA2025, ICAO2024], more than 100,000 flights are operated
+daily. Given this massive scale, the sector nowadays can be characterized mostly by its
+high dependency between flights, airplanes, and airports. Due to the high optimization
+of the flight schedules, a single delay in one flight can, sometimes, cause multiple and
+lasting delays in the flight network [Wuetal. 2024]. This delay and its mitigation can be
+influenced by multiple factors such as weather, flight schedules, airplane availability and
+manyothers.
+Correlating and considering the influence of each factor can be a very chal-
+lenging problem when using usual approaches such as Regression Algorithms, Reg-
+ular Neural Networks, and other Machine Learning Models, due to the limited ca-
+pacity of these models to consider the connections between different data points
+[RebolloandBalakrishnan2014, Wuetal. 2024]. For that challenge, an approach such
+as relating data points using Graphs can be extremely useful and bring significant value
+to the analysis, as the Graph architecture has the feature of making it easier to correlate
+seemingly unrelated data points to analyze a behavior. As algorithms evolve, the use of
+NeuralNetworkshasbecomemorewidelyusedtopredictbehaviors,andtheirassociation
+with Graphs is a valuable resource, since it combines the great capability of learning by
+analyzing patterns with the high capacity to associate information in a more appropriate
+way[Huetal. 2020,ZaninandLillo2013].
+
+=== PAGE 2 ===
+Another feature of organizing information into graphs is the native ability to con-
+sider different data types within the analysis, making it possible to differentiate aircraft
+information from weather data in a more natural and clear way. Understanding these
+distinct kinds of information is essential for the analysis [Huetal. 2020]. For example, a
+changeinweatherimpactsaflightscheduledifferentlythananaircraftmaintenancedelay.
+Therefore, using Heterogeneous Graph Neural Networks (HGNNs) [SunandHan2013]
+was a logical decision, as this architecture is capable of differentiating connections and
+determiningwhicharemostrelevantfortheprediction.
+To achieve highly accurate predictions, we propose SUBAERO. The methodol-
+ogy integrates the heterogeneous graph architecture with real-time data sources, such as
+OpenMeteoandANAC(AgeˆnciaNacionaldeAviac¸a˜oCivil)APIs1,tocomprehensively
+model the flight network. The results demonstrate the robust predictive capacity of this
+method, achieving a Mean Absolute Error of 6.7 minutes. This performance highlights
+thesystem’spotentialtoprovidevaluableinsightsandpreciseforecasts.
+Beyond its technical contribution, this work is motivated by a social challenge
+specific to the Brazilian context [ApriglianoFernandesetal. 2021]. As a continental
+nation with limited high-speed ground transportation, Brazil relies heavily on aviation
+to connect remote communities to healthcare, employment, and economic opportunity
+[Guietal. 2020]. In this setting, cascading flight delays carry an unequal burden: pas-
+sengers with greater financial resources can more easily absorb disruptions by rebooking
+flights or arranging alternative transport, while those with tighter budgets face dispropor-
+tionateconsequences.
+A reliable predictive tool for delay propagation, therefore, has direct social value,
+enablingproactivemitigationratherthanreactivedamagecontrol. Concretely,thesystem
+developed in this work can support ANAC in prioritizing regulatory interventions, assist
+airlinesinpreemptiveaircraftreallocation,andserveasafoundationforpassenger-facing
+alert systems. This way, SUBAERO has the capability to impact positively on people’s
+lives by using widely available data and providing a more predictable aerial network en-
+vironment.
+Thispaperisorganizedasfollows: Section2presentstheTheoreticalFoundation,
+discussing Complex Networks and Graph Theory. Section 3 discusses the related work.
+Section 4 describes the proposed method SUBAERO and methodology, detailing data
+collection and the heterogeneous graph modeling. Section 5 presents and discusses the
+results obtained from simulating the delay propagation. Finally, Section 6 summarizes
+theresultsachievedandprovidesfinalconsiderations.
+2. Theoretical Foundation
+This section presents the theoretical background related to the SUBAERO methodology.
+First, the fundamental concepts of Graph Theory and Complex Networks are described,
+which are important for representing relational aviation data. Next, we discuss the struc-
+tural characteristics of flight networks, with emphasis on the specific topology and the
+inherent vulnerability to cascating disruptions. Finally, we motivate the application of
+Graph Neural Networks to the delay propagation problem, with the adoption of the Het-
+erogeneousGraphTransformerarchitecture.
+1ANAC:https://www.gov.br/anac/pt-br
+
+=== PAGE 3 ===
+2.1. GraphTheoryandComplexNetworks
+Graph theory provides a mathematical foundation to represent complex relational struc-
+tures in an abstract and efficient manner. Formally, a graph G = (V,E) is defined as a
+collection of nodes (or vertices), V, and edges (or links), E [Diestel2017]. The primary
+strength of a Graph Network is to allow better relationships between data that can cor-
+relate with multiple data points simultaneously. This paper uses a Heterogeneous Graph
+architecture,improvingthecapabilityofGraphNetworkstocorrelatedistinctdatapoints
+at the same place as it comprises different types of nodes and edges. This way, it is pos-
+sibletoexplicitlyrepresentdistinctentities,suchasflights,airports,aircraft,andweather
+conditions,andtheiruniquerelationalsemanticswithinasingle,cohesivenetwork.
+2.2. FlightNetworkModelingandStructuralLimitations
+Inmodernaviation,networksarepredominantlyorganizedaroundhub-and-spoketopolo-
+gies [ZaninandLillo2013, Baraba´siandAlbert1999]. This configuration utilizes major
+hub airports to aggregate multiple inbound flights, followed by a concentrated wave of
+outbound departures within a short timeframe. This strategy allows airlines to provide
+a vast number of route combinations without scaling the total number of flights propor-
+tionally. However, this topology is inherently sensitive to disruptions; a single delay can
+cascade through the network, preventing passengers from reaching their connections and
+leadingtosignificantoperationalinefficienciesandadiminishedpassengerexperience.
+Traditional predictive approaches, such as regression algorithms and tabu-
+lar models, inherently ignore the complex sequential dependencies between flights
+[RebolloandBalakrishnan2014, Wuetal. 2024]. They fail to capture the true network
+structure, often missing the crucial multidimensional interactions between airport oper-
+ations, aircraft utilization, and localized weather conditions. By utilizing a Heteroge-
+neousGrapharchitecture,themodel natively incorporatesthesedistinctentitiesandtheir
+specific attributes, allowing the algorithm to learn from the exact topology of the flight
+network.
+2.3. GraphNeuralNetworksforDelayPropagationPrediction
+To address the challenge of accurately predicting delays given the multiple relation-
+ships between diverse data sources, Graph Neural Networks (GNNs) [Zhouetal. 2020,
+KipfandWelling2017] are applied to the modeled flight network. These models excel
+ataggregatingcomplexdatarelationshipssimultaneously,effectivelylearningwhichspe-
+cificdatapointsorgroupshavethegreatestimpactondelaypropagation.
+This research evaluated multiple GNN architectures, including Graph At-
+tention Networks (GAT) [Velickovicetal. 2018], Temporal Graph Networks (TGN)
+[Rossietal. 2020],andHeterogeneousGraphTransformers(HGT)[Huetal. 2020]. Fol-
+lowing preliminary testing on a subset of the dataset, HGT was selected as the primary
+model. This decision was based on its superior capacity to process heterogeneous net-
+works and its proven ability to capture complex structural patterns, ultimately yielding
+betterpredictiveperformancethantheotherevaluatedGNNarchitectures.
+3. Related Work
+The prediction of flight delays and their propagation within aviation networks has been
+widely studied, traditionally transitioning from isolated statistical models to complex
+
+=== PAGE 4 ===
+graph-based structures. Existing literature generally splits into approaches that leverage
+dense operational or meteorological datasets but restrict their scope to isolated flights or
+single hubs, and studies that model network-wide dynamics but rely on a limited set of
+datamodalities. Themethodologyproposedinthispaperbridgestheseisolatedeffortsby
+combining comprehensive multimodal feature integration with a scalable heterogeneous
+grapharchitecture.
+In Flight Delay Prediction Based on Aviation Big Data and Machine Learning
+by Gui et al. [Guietal. 2020], traditional machine learning models and LSTM networks
+are applied to high-frequency aviation and weather datasets to estimate delay minutes.
+While data-rich, this methodology analyzes flights independently using tabular and se-
+quentialformulations. Itrestrictsitsscopetospecificroutes,ignoringthelogisticalripple
+effects caused by interconnected operations. Our approach directly addresses this limita-
+tionbymodelingtheentirenationalflightnetworkasaheterogeneousgraph,dynamically
+tracking consecutive aircraft rotations to accurately predict cascading delays rather than
+treatingflightsasindependentevents.
+InADeepLearningApproachforFlightDelayPredictionthroughTime-Evolving
+Graphs by Cai et al. [Caietal. 2022], the authors propose a Time-Evolving GCN to
+capture the spatial-temporal propagation of delays across an airport network. Despite
+this valid network-centric view, their homogeneous graph relies almost exclusively on
+operational logs, neglecting external delay triggers like weather conditions and aircraft
+characteristics. Furthermore, scaling such global graphs often leads to severe memory
+bottlenecks. We expand upon their foundation by natively integrating multimodal data
+intoaHeterogeneousGraphTransformer(HGT)architecture,utilizinganinnovativesub-
+graphpartitioningstrategytoscaletheanalysistomillionsofflightsefficiently.
+Finally, in Predictive Modeling of Flight Delays at an Airport Using Machine
+LearningMethodsbyHatıpog˘luandTosun[Hatıpog˘luandTosun2024],tree-basedmod-
+els(e.g.,LightGBM,XGBoost)areutilizedtopredictindividualarrivaldelaysatasingle
+Turkish airport using local weather and traffic data. While effective locally, this geo-
+graphicallyconfined,tabularapproachisinherentlylimited,asitcannotforeseecascading
+delays caused by distant network disruptions. Conversely, our HGT model operates on a
+nationalscale,explicitlymappingcontinuousdelaycascadesacrosstheBraziliannetwork
+and maintaining a stable 6.7-minute MAE even on major regional hubs entirely omitted
+from the training phase. A comprehensive comparison of these distinct methodological
+aspectsissummarizedinTable1.
+4. Methodology
+In this work, we propose the SUBAERO method for predicting flight delay propagation
+in the Brazilian aviation network. This section details the methodology for the data col-
+lection, graph modeling, memory-optimized graph construction strategy and the iterative
+trainingprocessusingHeterogeneousGNNs.
+4.1. DataCollectionandFeatureEngineering
+The data used refers to the period from January 2025 to March 2026, representing ap-
+proximately 1.2 million flights across 129 Brazilian airports. The data was ingested from
+multipleAPIsandthenintegratedintoasingledatabase. Theconsideredsourcesare:
+
+=== PAGE 5 ===
+Table1. Summaryofrelatedworkonflightdelayprediction.
+Predictive
+Work DataSources Scope&Target
+Model
+Specific routes / Iso-
+ADS-B, weather, sched- Random Forest,
+[Guietal. 2020] latedflightdelaypredic-
+ules,airportinfo LSTM
+tion
+Airport network /
+Flightschedulesandhis- Time-Evolving
+[Caietal. 2022] Spatial-temporal delay
+toricaloperations GCN
+propagation
+Single-airport opera- Local hub / Individual LightGBM,
+[Hatıpog˘luandTosun2024] tions,localweather arrivaldelays XGBoost
+Diverse data sources: National network (129
+Heterogeneous
+SUBAERO (Proposed Flight(ANAC),weather, airports) / Aircraft-
+Graph Trans-
+Method) aircraft rotations, airport driven delay propaga-
+former(HGT)
+topology tion
+• ANAC VRA API2: A public REST API provided by the Brazilian National Civil
+Aviation Agency (ANAC). It was utilized to retrieve scheduled and actual flight
+recordssuchasdepartureandarrivaltimes,continuousdelaymetrics,aircraftreg-
+istration,andaerodromecodes.
+• Open-Meteo Archive3: An open-source REST API providing ERA5-based
+hourly historical weather data. Meteorological conditions, such as temperature,
+wind speed, precipitation, and cloud cover, were extracted for both the flight’s
+originanddestinationairports.
+• OpenSky Network API4: A crowdsourced ADS-B platform used to retrieve in-
+formation regarding ICAO24 transponder codes and aircraft metadata to assess
+aircraftage.
+• OurAirports Database5: An open-source global dataset used to enrich the net-
+work with structural and geographical airport features, specifically mapping the
+latitude,longitude,andelevationofeachnode.
+Relevant features, such as arrival delay, were limited to minimize the outliers’ influence
+andalsonormalizedusingstandardz-scoretechniques.
+4.2. GraphModeling
+Figure 1 shows the graph modeling. In the context of this study, the aviation sys-
+tem is modeled as a Heterogeneous Graph where nodes represent distinct entities:
+FLIGHT , AIRPORT , AIRCRAFT , and WEATHER CONDITION . The edges repre-
+sent the logistical and operational relationships connecting them, specifically mapped
+as ORIGIN , DESTINATION , NEXT ROTATION , and HAS ORIGIN WEATHER .
+Each node has specific properties, presented inside the node boxes. Specifically,
+flight departure delay is the target property that our method SUBAERO aims
+topredict.
+2ANAC VRA API: https://dados.gov.br/dados/conjuntos-dados/dadosabertos-areas-de-atuacao-voos-
+e-operacoes-aereas-voo-regular-ativo-vra
+3OpenMateo-FreeWeatherAPI:https://open-meteo.com/
+4OpenSkyNetworkAPI:https://opensky-network.org/data/api
+5OurAirportsDatabase: https://ourairports.com/
+
+=== PAGE 6 ===
+Figure 1. SUBAERO’s graph modeling of the flight network, with nodes, edges,
+andnodeproperties(features)employed.
+To better illustrate the proposed graph modeling, 2 presents a real-world data in-
+stanceextractedfromthedatabase,demonstratinghowaspecificflightanditscorrespond-
+ingentitiesareinterconnected.
+4.3. Memory-OptimizedGraphConstruction
+During Training a Graph Neural Network usually maintains all the data allocated in the
+RAMmemoryoftheDevice,butforlargeDatasets,thisdegradestheperformanceoreven
+freezes the Training Iteration. As a form of addressing this issue, a subgraph sampling
+strategy was developed; this way, the RAM memory only needs to hold some part of the
+dataatatime,resultinginlowerRAMusageduringtraining.
+Theapproachusedwastosplitthedataintocombinationsofairportsandmonths,
+iterating over it for each epoch. Even tough the Data was split, the approach maintained
+data such as Next aircraft flight, weather nodes, and Other Flight, Airport and Aircraft
+data,ensuringtheTrainingDatacontainsthemostrelationshipsbetweendatapointspos-
+sible,allowingthemodeltolearnwiththedata.
+4.4. PredictiveModelingwithHGT
+TheHeterogeneousGraphTransformerarchitecturewasselectedduetoitscapabilitiesof
+learninggivendistincttypesofnodesandedges,thetrainingofthemodelwasmadewith
+the approach detailed previously, and after 5 epochs, the Mean Absolute Error (MAE)
+converged. To validate the model and affirm the quality of the training phase, cross-
+validation was performed with hold-out data from airports unseen at the training stage.
+
+=== PAGE 7 ===
+Figure 2. SUBAERO’s real-world instance of the heterogeneous graph, illustrat-
+ingthenodepropertiesandrelationshipsforflight.
+The model was trained using the Adam optimizer with a learning rate of 1×10−3 and a
+weightdecayof1×10−4. ThearchitectureusedconsistsoftwoHGTlayerswithahidden
+dimension of 64, 4 attention heads, and a dropout rate of 0.3. For holdout validation, 5
+airportswereexcludedfromthetrainingsettocheckforoverfittingafterward.
+5. Results and Discussion
+Crucially, the performance of the Heterogeneous Graph Transformer (HGT) model was
+evaluated entirely on real-world historical datasets. Utilizing actual flight operations and
+meteorologicaldatafromopenAPIsratherthansimulatedscenarios,theobjectivewasto
+predict the continuous delay time in minutes for flight arrivals. The model’s accuracy in
+theseoperationalconditionswasmeasuredusingtheMeanAbsoluteError(MAE)metric,
+whichassessestheaveragemagnitudeofpredictionerrors.
+5.1. ModelPerformanceandScalability
+As described in the methodology, training a global graph with all available data ini-
+tially resulted in severe memory bottlenecks. By implementing the memory-optimized
+subgraph construction (iterating over airport-month combinations while preserving
+NEXT ROTATION edges), the model was successfully scaled to encompass 129 medium
+andlargeBrazilianairports,totalingapproximately1.17millionflights.
+For this comprehensive dataset, the HGT architecture achieved a highly competi-
+tive MAE of 6.7 minutes. This result demonstrates that the model is not only capable of
+processing large-scale networks with multiple data sources but also adapts at capturing
+thefine-grainednuancesofaircraft-drivendelaypropagation.
+
+=== PAGE 8 ===
+5.2. GeneralizationandOverfittingValidation
+Duetoanexpressivenumberofflightswithdifferentdatasources,itisabigconcernthat
+the occurrence ofoverfitting in the model training. To testfor generalization capabilities,
+an out-of-sample validation was conducted, leaving 5 airports out of the training, one
+for each Brazil Subregion, and then measuring the Mean Absolute Error (MAE) for each
+airport. Theresultscanbeseenbelow:
+• GYN(Goiaˆnia): 5.9minutes
+• MAO(Manaus): 6.5minutes
+• FOR(Fortaleza): 6.8minutes
+• POA(PortoAlegre): 7.6minutes
+• VCP(Campinas): 6.8minutes
+Forreference,theotherevaluatedarchitectures(GATandTGN)achievedaMean
+Absolute Error of 24.76 and 70.02 minutes, respectively, using the same training config-
+uration. The HGT approach reached 6.56 minutes, while the final model, trained with
+aircraft rotations and validated using the holdout strategy, achieved 6.7 minutes. This
+result highlights the value of the heterogeneous structure for this task. Taken together
+withthegeneralizationresults,thisconfirmsthattheHGTsuccessfullylearnedstructural
+patternsfromthenetworkratherthanoverfittingtothetrainingdata.
+The aggregate MAE for airports explicitly seen during training was 6.9 minutes,
+compared to 6.7 minutes for the entirely unseen airports. This proximity in error mar-
+gins strongly indicates the absence of overfitting. It confirms that the HGT successfully
+learned the underlying structural and temporal patterns of delay propagation—such as
+how weather and consecutive aircraft operations interact—rather than memorizing the
+behaviorofspecificgeographicalnodes.
+To further validate the model’s generalization capability and rule out overfitting,
+the learning trajectory was analyzed throughout the training phase. As illustrated in Fig-
+ure 3, both the training and validation error metrics decrease consistently and converge
+together over the 50 epochs. The absence of divergence between these curves is a strong
+indicator that the model could successfully generalize for unseen data and should not be
+over-fitted.
+6. Conclusion
+This work presents SUBAERO, an Approach that exploits graphs and graph neural net-
+works to predict, with certain accuracy, the delay propagation of flights on the Brazilian
+aviation network. By using graph neural networks, it was possible to account for rela-
+tionshipsbetweendistinctdatasourcesinordertoimprovetheGNNunderstandingofthe
+situation, and by using a Heterogeneous Graph Transformer (HGT) architecture, it was
+possibletostrengthenthemodel’sunderstandingofthisdiversedatainformation.
+Inordertodealwithissuesofmemorylimitationswhendealingwithhugegraphs,
+the dynamic subgraph partitioning strategy was essential not only for the model execu-
+tion,butalsoforimprovingthemodelresultsinasignificantway. Allowingthesystemto
+escalate to almost 130 airports with over a million flights without losing the critical tem-
+poral links that dictate delay cascades, achieving a Mean Absolute Error of 6.7 minutes,
+withstrongevidenceofagreatgeneralizationofthemodel.
+
+=== PAGE 9 ===
+Figure3. Learningcurveover50epochsshowingtheconsistentconvergenceof
+trainingandvalidationmetrics.
+From a Data Science for Social Good perspective, the practical relevance of this
+result extends beyond operational efficiency. A prediction accuracy of 6.1 minutes MAE
+atthenationalscaleissufficienttosupportactionableinterventions: airlinescanconsider
+aircraftreallocationbeforeadelaycascadepropagates;groundcrewscanberepositioned
+proactively; and passengers can receive early alerts with enough lead time to make al-
+ternative arrangements. This is particularly meaningful in the Brazilian context, where
+aviation connects communities that lack viable ground transport alternatives, and where
+thesocialcostofdisruptionisdistributedunequallyacrossthepopulation.
+Futureworkmayexploretheintegrationofsocioeconomicindicators,suchasthe
+Human Development Index (HDI) of municipalities served by each route, to assess the
+equity dimension of delay propagation more rigorously. Additional directions include
+expanding the graph structure with critical operational nodes—such as crew scheduling
+constraints and passenger connection flows to better capture unpredictable operational
+vagaries. Furthermore, we aim to integrate real-time streaming data pipelines to reduce
+prediction latency and evaluate the model’s transferability to international aviation net-
+works.
+Acknowledgements
+This work was supported by the Sa˜o Paulo Research Foundation (FAPESP – grants
+#2026/11130-2,#2024/15430-5,#2024/13328-9),theCoordinationforHigherEducation
+Personnel Improvement (CAPES – Finance Code 001), the National Research Council
+(CNPq – grants #401496/2025-2 and #402987/2025-0), and the University of Sa˜o Paulo
+(PRPI1032-grant#207).
+Generative AI usage statement
+Grammarly and Gemini tools were used exclusively to support the linguistic revision of
+themanuscript. Theauthorstakefullresponsibilityforthecontentpresentedherein.
+
+=== PAGE 10 ===
+References
+Aprigliano Fernandes, V., Pacheco, R. R., Fernandes, E., Cabo, M., Ventura, R. V., and
+Caixeta, R. (2021). Air transportation, economy and causality: Remote towns in
+brazil’samazonregion. Sustainability,13(2). DOI:10.3390/su13020627.
+Baraba´si, A.-L. and Albert, R. (1999). Emergence of scaling in random networks. Sci-
+ence,286(5439):509–512.
+Cai,K.,Li,Y.,Fang,Y.-P.,andZhu,Y.(2022). Adeeplearningapproachforflightdelay
+predictionthroughtime-evolvinggraphs.IEEETransactionsonIntelligentTransporta-
+tionSystems,23(8):11397–11407. DOI:10.1109/TITS.2021.3103502.
+Diestel,R.(2017). GraphTheory. SpringerBerlinHeidelberg. DOI:10.1007/978-3-662-
+53622-3.
+Gui, G., Liu, F., Sun, J., Yang, J., Zhou, Z., and Zhao, D. (2020). Flight delay prediction
+based on aviation big data and machine learning. IEEE Transactions on Vehicular
+Technology,69(1):140–150. DOI:10.1109/TVT.2019.2954094.
+Hatıpog˘lu, I. and Tosun, O¨. (2024). Predictive modeling of flight delays at an air-
+port using machine learning methods. Applied Sciences, 14(13):5472. DOI:
+10.3390/app14135472.
+Hu, Z., Dong, Y., Wang, K., and Sun, Y. (2020). Heterogeneous graph transformer. In
+Proceedings of The Web Conference 2020, WWW ’20, page 2704–2710, New York,
+NY,USA.AssociationforComputingMachinery. DOI:10.1145/3366423.3380027.
+IATA (2025). IATA Launches 2024 World Air Transport Statistics Report —
+iata.org. URL: https://www.iata.org/en/pressroom/2025-releases/2025-08-04-01/ [Ac-
+cessed23-05-2026].
+ICAO (2024). Annual Report 2024 - The World of Air Transport in 2024
+- icao.int. URL: https://www.icao.int/about-icao/AnnualReport2024/world-air-
+transport-2024[Accessed23-05-2026].
+Kipf, T. N. and Welling, M. (2017). Semi-supervised classification with graph convolu-
+tional networks. In 5th International Conference on Learning Representations, ICLR
+2017,Toulon,France,April24-26,2017,ConferenceTrackProceedings.
+Rebollo, J. J. and Balakrishnan, H. (2014). Characterization and prediction of air traffic
+delays. Transportation Research Part C: Emerging Technologies, 44:231–241. DOI:
+10.1016/j.trc.2014.04.007.
+Rossi, E., Chamberlain, B., Frasca, F., Eynard, D., Monti, F., and Bronstein, M. M.
+(2020). Temporal graph networks for deep learning on dynamic graphs. CoRR,
+abs/2006.10637. URL:https://arxiv.org/abs/2006.10637.
+Sun, Y. and Han, J. (2013). Mining heterogeneous information networks: a
+structural analysis approach. SIGKDD Explor. Newsl., 14(2):20–28. DOI:
+10.1145/2481244.2481248.
+Velickovic, P., Cucurull, G., Casanova, A., Romero, A., Lio`, P., and Bengio, Y. (2018).
+Graph attention networks. In 6th International Conference on Learning Representa-
+tions, ICLR 2018, Vancouver, BC, Canada, April 30 - May 3, 2018, Conference Track
+Proceedings. URL:https://openreview.net/forum?id=rJXMpikCZ.
+
+=== PAGE 11 ===
+Wu, Y., Yang, H., Lin, Y., and Liu, H. (2024). Spatiotemporal Propagation Learning
+forNetwork-WideFlightDelayPrediction. IEEETransactionsonKnowledge&Data
+Engineering,36(01):386–400. DOI:10.1109/TKDE.2023.3286690.
+Zanin, M. and Lillo, F. (2013). Modelling the air transport with complex networks: A
+short review. The European Physical Journal Special Topics, 215(1):5–21. DOI:
+10.1140/epjst/e2013-01711-9.
+Zhou, J., Cui, G., Hu, S., Zhang, Z., Yang, C., Liu, Z., Wang, L., Li, C., and Sun, M.
+(2020). Graph neural networks: A review of methods and applications. AI Open,
+1:57–81. DOI:10.1016/j.aiopen.2021.01.001.
+

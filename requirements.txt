@@ -1,0 +1,7 @@
+﻿torch
+torch_geometric
+neo4j
+pandas
+numpy
+scikit-learn
+requests

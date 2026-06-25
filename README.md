@@ -1,6 +1,6 @@
 # SUBAERO — Predicting Flight Delay Propagation with Heterogeneous GNNs
 
-MBA in AI & Big Data (ICMC-USP) Final Project (TCC). This project trains a **Heterogeneous Graph Neural Network** to predict arrival delays (in minutes) of Brazilian commercial flights, modeling the relationships between flights, airports, aircraft, and weather as a graph in Neo4j.
+This project trains a **Heterogeneous Graph Neural Network** to predict arrival delays (in minutes) of Brazilian commercial flights, modeling the relationships between flights, airports, aircraft, and weather as a graph in Neo4j.
 
 ---
 

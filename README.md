@@ -4,15 +4,19 @@ TCC do MBA em IA & Big Data (ICMC-USP). O projeto treina uma **Graph Neural Netw
 
 ---
 
-## Resultados (PoC — 2.360 voos, 80 épocas)
+## Resultados Principais (Dataset Nacional: ~1.17M voos)
 
-| Modelo | Parâmetros | Teste MAE | Teste RMSE | Melhor Época |
-|--------|-----------|-----------|------------|-------------|
-| **GAT** ← recomendado | 1.475.585 | **25,92 min** | **34,50 min** | 36 |
-| HGT | 181.345 | 28,42 min | 37,46 min | 78 |
-| TGN | 394.817 | 77,55 min | 101,81 min | 80 |
+Utilizando a arquitetura **Heterogeneous Graph Transformer (HGT)** com estratégia de *subgraph partitioning* para lidar com limitações de memória, o modelo alcançou um **Mean Absolute Error (MAE) de 6,7 minutos** para o conjunto de validação.
 
-> O GAT converge mais rápido e tem o menor MAE. O HGT usa 8× menos parâmetros com resultado apenas 10% pior — bom para ambientes com memória limitada.
+Para validar a capacidade de generalização e evitar *overfitting*, uma validação *out-of-sample* (holdout) excluiu completamente 5 aeroportos (um de cada região) do conjunto de treinamento. Os resultados de MAE nestes aeroportos nunca vistos pelo modelo foram:
+
+- **GYN (Goiânia):** 5,9 minutos
+- **MAO (Manaus):** 6,5 minutos
+- **FOR (Fortaleza):** 6,8 minutos
+- **VCP (Campinas):** 6,8 minutos
+- **POA (Porto Alegre):** 7,6 minutos
+
+> O MAE agregado para os aeroportos vistos no treinamento foi muito semelhante (6,9 minutos), o que demonstra uma excelente generalização do modelo baseada na topologia da malha e atributos meteorológicos. Para referência, as arquiteturas GAT e TGN registraram MAEs de 24,76 e 70,02 minutos neste mesmo experimento validado, confirmando a superioridade do HGT.
 
 ---
 
